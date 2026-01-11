@@ -1,60 +1,44 @@
-# SQL Cheatsheet – Databasebeheer & Queries (Sectie 1–7)
+# SQL
 
-Praktische SQL-cheatsheet voor basis databasebeheer en query’s.
-Geschikt als naslag voor SELECT-, JOIN-, CREATE-, ALTER- en UPDATE-opdrachten
-zoals behandeld in **sectie 1 t/m 7**.
-
----
+Praktische notities voor SQL (sectie 1–7). Basis queries en eenvoudige database-aanpassingen in phpMyAdmin.
 
 ## Inhoud
-- [Voorwaarden](#voorwaarden)
-- [Snelle datacontrole](#snelle-datacontrole)
-- [Select queries](#select-queries)
-- [Filtering & sortering](#filtering--sortering)
-- [Joins](#joins)
-- [Tabellen aanmaken](#tabellen-aanmaken)
-- [Tabellen aanpassen](#tabellen-aanpassen)
-- [Relaties (foreign keys)](#relaties-foreign-keys)
-- [Data invoegen en wijzigen](#data-invoegen-en-wijzigen)
-- [Integriteit testen](#integriteit-testen)
-
----
+- Voorwaarden
+- Query: controle data
+- Query: totaal in dienst
+- Query: overzicht in dienst
+- Query: uit dienst in 2022
+- Table: adstatus aanmaken
+- Alter: employees uitbreiden
+- Alter: foreign key relatie
+- Insert: statuswaarden toevoegen
+- Update: medewerker status zetten
+- Delete-test: foreign key controle
 
 ## Voorwaarden
-- MySQL / MariaDB database
-- Toegang via phpMyAdmin of MySQL CLI
-- Tabellen: `employees`, `departments`
-- Basiskennis SQL (SELECT, WHERE, JOIN)
+- MySQL / MariaDB
+- phpMyAdmin
+- Tabellen: employees, departments
+- Kolommen gebruikt: firstname, lastname, adres, city, zipcode, email, outservice_date, department_id
 
----
-
-## Snelle datacontrole
-
-Gebruik deze query om te controleren of de tabel data bevat.
+## Query: controle data
+Controle of de tabel bestaat en data bevat.
 
 ```sql
 SELECT *
 FROM employees
 LIMIT 5;
-pgsql
-Code kopiëren
+```
 
-```markdown
-## Query 1 – Totaal aantal medewerkers in dienst
-
-Medewerkers die nog in dienst zijn hebben geen `outservice_date`.
+In dienst = outservice_date is leeg (NULL).
 
 ```sql
 SELECT COUNT(*) AS totaal_indienst
 FROM employees
 WHERE outservice_date IS NULL;
-pgsql
-Code kopiëren
+```
 
-```markdown
-## Query 2 – Overzicht medewerkers in dienst
-
-Velden worden opgebouwd in de query zelf.
+Vaste volgorde velden. Username wordt opgebouwd. Department komt uit departments.
 
 ```sql
 SELECT
@@ -71,13 +55,12 @@ FROM employees e
 JOIN departments d
   ON e.department_id = d.department_id
 WHERE e.outservice_date IS NULL;
-pgsql
-Code kopiëren
+```
+Opmerking:
 
-```markdown
-## Query 3 – Medewerkers uit dienst in 2022
+Password is placeholder (geen echte wachtwoorden)
 
-Resultaat gesorteerd van oud naar nieuw.
+Filter op datum en sorteer van oud naar nieuw.
 
 ```sql
 SELECT
@@ -87,3 +70,57 @@ SELECT
 FROM employees
 WHERE outservice_date BETWEEN '2022-01-01' AND '2022-12-31'
 ORDER BY outservice_date ASC;
+```
+
+Nieuwe tabel voor statuswaarden.
+
+```sql
+CREATE TABLE adstatus (
+  status_id INT NOT NULL PRIMARY KEY,
+  status_omschrijving VARCHAR(100) NOT NULL
+);
+```
+
+Kolom toevoegen aan employees.
+
+```sql
+ALTER TABLE employees
+ADD adstatus_id INT;
+```
+
+Relatie leggen tussen employees.adstatus_id en adstatus.status_id.
+
+```sql
+ALTER TABLE employees
+ADD CONSTRAINT fk_employees_adstatus
+FOREIGN KEY (adstatus_id)
+REFERENCES adstatus(status_id);
+```
+
+Vier statuswaarden invoegen.
+
+```sql
+INSERT INTO adstatus (status_id, status_omschrijving) VALUES
+(1, 'In de Active Directory en user is actief'),
+(2, 'In de Active Directory en user niet actief'),
+(3, 'Niet in de Active Directory'),
+(0, 'Onbekend');
+```
+
+Voorbeeld: employee_id 145 krijgt status 3.
+
+```sql
+UPDATE employees
+SET adstatus_id = 3
+WHERE employee_id = 145;
+```
+
+Test of verwijderen geblokkeerd wordt door de relatie.
+
+```sql
+DELETE FROM adstatus
+WHERE status_id = 3;
+```
+Verwachte uitkomst:
+
+delete wordt geweigerd door foreign key constraint
