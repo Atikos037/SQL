@@ -50,15 +50,12 @@ SELECT
   e.email,
   CONCAT(e.firstname, e.lastname) AS username,
   d.department_name AS department,
-  '********' AS password
+  'WaChTwOoRd' AS password
 FROM employees e
 JOIN departments d
   ON e.department_id = d.department_id
 WHERE e.outservice_date IS NULL;
 ```
-Opmerking:
-
-Password is placeholder (geen echte wachtwoorden)
 
 Filter op datum en sorteer van oud naar nieuw.
 
