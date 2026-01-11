@@ -1,231 +1,171 @@
-# SQL Cheatsheet
+# SQL Cheatsheet – Databasebeheer & Queries (Sectie 1–7)
 
-A practical SQL reference for querying relational databases.  
-Created as a personal knowledge base and portfolio resource.
-
----
-
-## Table of Contents
-- Introduction
-- SELECT Basics
-- Filtering Data
-- Logical Operators & Sorting
-- Functions
-- NULL Handling & CASE
-- JOINs
-- Subqueries
-- Best Practices
+Praktische SQL-cheatsheet voor basis databasebeheer en query’s.
+Geschikt als naslag voor SELECT-, JOIN-, CREATE-, ALTER- en UPDATE-opdrachten
+zoals behandeld in **sectie 1 t/m 7**.
 
 ---
 
-## Introduction
-
-This repository contains a clean and structured SQL cheatsheet focused on:
-
-- Selecting data
-- Filtering and sorting results
-- Using SQL functions
-- Working with JOINs
-- Writing subqueries
-
-All examples use **generic table and column names** to keep the content reusable and database-agnostic.
+## Inhoud
+- [Voorwaarden](#voorwaarden)
+- [Snelle datacontrole](#snelle-datacontrole)
+- [Select queries](#select-queries)
+- [Filtering & sortering](#filtering--sortering)
+- [Joins](#joins)
+- [Tabellen aanmaken](#tabellen-aanmaken)
+- [Tabellen aanpassen](#tabellen-aanpassen)
+- [Relaties (foreign keys)](#relaties-foreign-keys)
+- [Data invoegen en wijzigen](#data-invoegen-en-wijzigen)
+- [Integriteit testen](#integriteit-testen)
 
 ---
 
-## SELECT Basics
+## Voorwaarden
+- MySQL / MariaDB database
+- Toegang via phpMyAdmin of MySQL CLI
+- Tabellen: `employees`, `departments`
+- Basiskennis SQL (SELECT, WHERE, JOIN)
+
+---
+
+## Snelle datacontrole
+
+Gebruik deze query om te controleren of de tabel data bevat.
 
 ```sql
 SELECT *
-FROM staff;
-sql
-Code kopiëren
-SELECT first_name, last_name
-FROM staff;
-sql
-Code kopiëren
-SELECT *
-FROM staff
-WHERE role_code = 'DEV';
-Aliases
-sql
-Code kopiëren
-SELECT salary AS monthly_salary
-FROM staff;
-Calculations
-sql
-Code kopiëren
-SELECT salary * 12 AS yearly_salary
-FROM staff;
-Limiting Results
-sql
-Code kopiëren
-SELECT TOP (5) *
-FROM staff;
-Filtering Data
-DISTINCT
-sql
-Code kopiëren
-SELECT DISTINCT team_id
-FROM staff;
-Comparison Operators
-javascript
-Code kopiëren
-=   <>   !=   >   <   >=   <=
-BETWEEN
-sql
-Code kopiëren
-WHERE salary BETWEEN 4000 AND 9000;
-IN
-sql
-Code kopiëren
-WHERE country_code IN ('NL', 'BE', 'DE');
-LIKE (Pattern Matching)
-sql
-Code kopiëren
-WHERE last_name LIKE 'A%';
-WHERE last_name LIKE '%son';
-WHERE last_name LIKE '_o%';
-NULL Checks
-sql
-Code kopiëren
-WHERE manager_id IS NULL;
-WHERE bonus IS NOT NULL;
-Logical Operators & Sorting
-AND / OR / NOT
-sql
-Code kopiëren
-WHERE team_id = 10 AND salary > 3000;
-sql
-Code kopiëren
-WHERE role_code = 'DEV' OR role_code = 'OPS';
-Operator Precedence
-Parentheses ()
-
-NOT
-
-AND
-
-OR
+FROM employees
+LIMIT 5;
+Select queries
+Totaal aantal medewerkers in dienst
+Medewerkers die nog in dienst zijn hebben geen outservice_date.
 
 sql
 Code kopiëren
-WHERE (team_id = 10 OR team_id = 20)
-AND salary > 5000;
-ORDER BY
-sql
-Code kopiëren
-ORDER BY salary;
-ORDER BY salary DESC;
-ORDER BY 2;
-ORDER BY yearly_salary;
-Functions
-String Functions
-sql
-Code kopiëren
-LOWER(text)
-UPPER(text)
-LEFT(text, 2)
-RIGHT(text, 2)
-SUBSTRING(text, 1, 3)
-REPLACE(text, 'old', 'new')
-Numeric Functions
-sql
-Code kopiëren
-ROUND(value, 2)
-CEILING(value)
-FLOOR(value)
-Date Functions
-sql
-Code kopiëren
-GETDATE()
-YEAR(start_date)
-MONTH(start_date)
-DAY(start_date)
-DATEDIFF(YEAR, start_date, GETDATE())
-DATEADD(MONTH, 1, start_date)
-Aggregate Functions
-sql
-Code kopiëren
-MIN()
-MAX()
-SUM()
-AVG()
-COUNT()
-COUNT(*)
-COUNT(DISTINCT column)
-Aggregate functions cannot be used directly in a WHERE clause.
+SELECT COUNT(*) AS totaal_indienst
+FROM employees
+WHERE outservice_date IS NULL;
+Filtering & sortering
+Medewerkers uit dienst in 2022
+Resultaat gesorteerd van oud naar nieuw.
 
-NULL Handling & CASE
-ISNULL / COALESCE
-sql
-Code kopiëren
-ISNULL(bonus, 0)
-COALESCE(bonus, commission, 0)
-CASE
 sql
 Code kopiëren
 SELECT
-CASE
-  WHEN salary >= 8000 THEN 'High'
-  WHEN salary >= 4000 THEN 'Medium'
-  ELSE 'Low'
-END AS salary_level
-FROM staff;
-JOINs
-INNER JOIN
+  firstname,
+  lastname,
+  CONCAT(firstname, lastname) AS username
+FROM employees
+WHERE outservice_date BETWEEN '2022-01-01' AND '2022-12-31'
+ORDER BY outservice_date ASC;
+Joins
+Overzicht medewerkers in dienst met afdeling
+Velden worden bewust opgebouwd in de query.
+
 sql
 Code kopiëren
-SELECT s.last_name, t.team_name
-FROM staff s
-INNER JOIN teams t
-ON s.team_id = t.team_id;
-LEFT JOIN
+SELECT
+  e.firstname,
+  e.lastname,
+  e.adres,
+  e.city,
+  e.zipcode,
+  e.email,
+  CONCAT(e.firstname, e.lastname) AS username,
+  d.department_name AS department,
+  '********' AS password
+FROM employees e
+JOIN departments d
+  ON e.department_id = d.department_id
+WHERE e.outservice_date IS NULL;
+Opmerking:
+
+Het wachtwoordveld is een placeholder
+
+Er wordt geen echt wachtwoord opgehaald
+
+Tabellen aanmaken
+Tabel adstatus
+Deze tabel bevat mogelijke Active Directory statussen.
+
 sql
 Code kopiëren
-SELECT s.last_name, t.team_name
-FROM staff s
-LEFT JOIN teams t
-ON s.team_id = t.team_id;
-Subqueries
-Subquery with IN
-sql
-Code kopiëren
-SELECT last_name
-FROM staff
-WHERE team_id IN (
-  SELECT team_id
-  FROM teams
-  WHERE site_id = 100
+CREATE TABLE adstatus (
+  status_id INT NOT NULL PRIMARY KEY,
+  status_omschrijving VARCHAR(100) NOT NULL
 );
-Single-Value Subquery
+Controle:
+
+Controleer of de tabel zichtbaar is in phpMyAdmin
+
+Tabellen aanpassen
+Kolom toevoegen aan employees
 sql
 Code kopiëren
-SELECT last_name
-FROM staff
-WHERE salary = (
-  SELECT MAX(salary)
-  FROM staff
-);
-EXISTS
+ALTER TABLE employees
+ADD adstatus_id INT;
+Controle:
+
 sql
 Code kopiëren
-SELECT last_name
-FROM staff s
-WHERE EXISTS (
-  SELECT 1
-  FROM work_log w
-  WHERE w.staff_id = s.staff_id
-);
-Best Practices
-Write SQL readable (one clause per line)
+DESCRIBE employees;
+Relaties (foreign keys)
+Relatie leggen volgens ERD
+sql
+Code kopiëren
+ALTER TABLE employees
+ADD CONSTRAINT fk_employees_adstatus
+FOREIGN KEY (adstatus_id)
+REFERENCES adstatus(status_id);
+Doel:
 
-Use clear aliases when joining tables
+Waarborgt dat alleen geldige statussen gebruikt worden
 
-Avoid SELECT * in production
+Data invoegen en wijzigen
+AD-statussen toevoegen
+sql
+Code kopiëren
+INSERT INTO adstatus (status_id, status_omschrijving) VALUES
+(1, 'In de Active Directory en user is actief'),
+(2, 'In de Active Directory en user niet actief'),
+(3, 'Niet in de Active Directory'),
+(0, 'Onbekend');
+Controle:
 
-Use parentheses to control logic
+sql
+Code kopiëren
+SELECT *
+FROM adstatus
+ORDER BY status_id;
+Status toekennen aan medewerker
+sql
+Code kopiëren
+UPDATE employees
+SET adstatus_id = 3
+WHERE employee_id = 145;
+Controle:
 
-Test subqueries separately
+sql
+Code kopiëren
+SELECT employee_id, adstatus_id
+FROM employees
+WHERE employee_id = 145;
+Integriteit testen
+Delete-test foreign key
+sql
+Code kopiëren
+DELETE FROM adstatus
+WHERE status_id = 3;
+Verwachte uitkomst:
 
-License
-Free to use for learning and portfolio purposes.
+Verwijderen niet toegestaan
+
+Foreign key constraint voorkomt dataverlies
+
+Controle:
+
+sql
+Code kopiëren
+SELECT *
+FROM adstatus
+ORDER BY status_id;
